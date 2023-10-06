@@ -34,7 +34,6 @@ const userSchema = new Schema({
 
   status: { type: Number, default: 0 },
 
-
   //Người tạo
   author: {
     type: Schema.Types.ObjectId,

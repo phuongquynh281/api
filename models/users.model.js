@@ -4,40 +4,34 @@ const { hash, compare } = require("bcryptjs");
 const { sign, verify } = require("../utils/jwt");
 
 module.exports = class User {
-  static createUser(username, password, fullName, gender, role) {
+  static createUser(username, fullName, gender) {
     return new Promise(async (resolve) => {
       try {
-        if (password.length < 6)
-          return resolve({
-            error: true,
-            message: "Password phải từ 6 kí tự trở lên",
-          });
-        if (username.includes(" ")) {
-          return {
-            error: true,
-            message: "Tên đăng nhập phải viết liền không dấu",
-          };
-        }
+        // if (username.includes(" ")) {
+        //   return {
+        //     error: true,
+        //     message: "Tên đăng nhập phải viết liền không dấu",
+        //   };
+        // }
         let checkExist = await USER.findOne({ username });
         if (checkExist)
           return resolve({
             error: true,
             message: "Tên đăng nhập đã tồn tại, vui lòng nhập username khác",
           });
-        const usernameRegex = /^[a-zA-Z0-9_]+$/;
+        const usernameRegex = /^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/;
         if (!usernameRegex.test(username)) {
           return {
             error: true,
             message: "Tên đăng nhập không hợp lệ",
           };
         }
-        let hashPassword = await hash(password, 8);
         let newUser = new USER({
           fullName,
           username,
-          password: hashPassword,
+          password: this.generateRandomPassword(),
           gender,
-          role,
+          role: "Interviewee",
         });
 
         let infoUser = await newUser.save();
@@ -75,11 +69,53 @@ module.exports = class User {
           updateAt: Date.now(),
         };
 
-        let infoAfterUpdate = await USER.findByIdAndUpdate(
-          userID,
-          dataUpdate,
-          { new: true }
-        );
+        let infoAfterUpdate = await USER.findByIdAndUpdate(userID, dataUpdate, {
+          new: true,
+        });
+
+        if (!infoAfterUpdate)
+          return resolve({
+            error: true,
+            message: "Lỗi trong quá trình cập nhật",
+          });
+
+        return resolve({
+          data: infoAfterUpdate,
+          message: "Cập nhật thành công",
+        });
+      } catch (error) {
+        return resolve({ error: true, message: error.message });
+      }
+    });
+  }
+
+  static updateEmployee({
+    userID,
+    fullName,
+    gender,
+    birthDay,
+    phone,
+    address,
+    role,
+  }) {
+    return new Promise(async (resolve) => {
+      try {
+        if (!ObjectID.isValid(userID))
+          return resolve({ error: true, message: "params_invalid" });
+
+        let dataUpdate = {
+          fullName,
+          gender,
+          birthDay,
+          phone,
+          address,
+          role,
+          updateAt: Date.now(),
+        };
+
+        let infoAfterUpdate = await USER.findByIdAndUpdate(userID, dataUpdate, {
+          new: true,
+        });
 
         if (!infoAfterUpdate)
           return resolve({
@@ -124,15 +160,38 @@ module.exports = class User {
     });
   }
 
-  static getList() {
+  static getListEmployee() {
     return new Promise(async (resolve) => {
       try {
-        let listUser = await USER.find();
+        let listUser = await USER.find({
+          role: { $in: ["Interviewer", "HRM"] },
+        });
 
         if (!listUser)
-          return resolve({ error: true, message: "Không tìm thấy danh sách ứng viên" });
+          return resolve({
+            error: true,
+            message: "Không tìm thấy danh sách ứng viên",
+          });
 
-        return resolve(listUser);
+        return resolve({ error: false, data: listUser });
+      } catch (error) {
+        return resolve({ error: true, message: error.message });
+      }
+    });
+  }
+
+  static getListInterviewee() {
+    return new Promise(async (resolve) => {
+      try {
+        let listUser = await USER.find({ role: "Interviewee" });
+
+        if (!listUser)
+          return resolve({
+            error: true,
+            message: "Không tìm thấy danh sách ứng viên",
+          });
+
+        return resolve({ error: false, data: listUser });
       } catch (error) {
         return resolve({ error: true, message: error.message });
       }
@@ -145,9 +204,12 @@ module.exports = class User {
         let infoUser = await USER.findById(userID);
 
         if (!infoUser)
-          return resolve({ error: true, message: "Không tìm thấy thông tin ứng viên" });
+          return resolve({
+            error: true,
+            message: "Không tìm thấy thông tin ứng viên",
+          });
 
-        return resolve(infoUser);
+        return resolve({ error: false, data: infoUser });
       } catch (error) {
         return resolve({ error: true, message: error.message });
       }
@@ -198,6 +260,16 @@ module.exports = class User {
       }
     });
   }
+  static generateRandomPassword() {
+    const length = 6;
+    const charset = "0123456789"; // Chuỗi ký tự chứa các số từ 0 đến 9
+    let password = "";
 
+    for (let i = 0; i < length; i++) {
+      const randomIndex = Math.floor(Math.random() * charset.length);
+      password += charset[randomIndex];
+    }
 
+    return password;
+  }
 };

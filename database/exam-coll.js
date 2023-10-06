@@ -1,53 +1,20 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
-
 const ExamSchema = new Schema({
-  /**
-   * Tên
-   */
   name: String,
 
   description: String,
 
-  //Loại giao diện đề
-  type: String,
-
-  //Ghi chú
-  note: String,
-
-  //Trạng thái
-  status: String,
-
-  file: String,
-
   //Người tạo
-  author: {
+  createdBy: {
     type: Schema.Types.ObjectId,
     ref: "user",
   },
 
   //Người cập nhật
-  userUpdate: {
+  updatedBy: {
     type: Schema.Types.ObjectId,
     ref: "user",
-  },
-
-  /**
-   * Môn học
-   */
-  subject: {
-    type: Schema.Types.ObjectId,
-    ref: "subject",
-  },
-
-  department: {
-    type: Schema.Types.ObjectId,
-    ref: "department",
-  },
-
-  school: {
-    type: Schema.Types.ObjectId,
-    ref: "school",
   },
 
   question: [
@@ -57,16 +24,11 @@ const ExamSchema = new Schema({
     },
   ],
 
-  /**
-   * Khối(lớp)
-   */
-  level: { type: Number, default: 1 },
-
   //Thời gian đếm ngược
   timeDoTest: String,
 
   //Độ khó---- 0: Dễ || 1: Vừa || 2: Khó
-  level_difficult: {
+  levelDifficult: {
     type: Number,
     default: 1,
   },
@@ -75,32 +37,6 @@ const ExamSchema = new Schema({
     {
       type: Schema.Types.ObjectId,
       ref: "result",
-      default: [],
-    },
-  ],
-
-  //Lượt xem
-  seen: [
-    {
-      type: Schema.Types.ObjectId,
-      ref: "user",
-      default: [],
-    },
-  ],
-
-  //Lưu
-  saveExam: [
-    {
-      type: Schema.Types.ObjectId,
-      ref: "user",
-      default: [],
-    },
-  ],
-
-  comments: [
-    {
-      type: Schema.Types.ObjectId,
-      ref: "comment",
       default: [],
     },
   ],
