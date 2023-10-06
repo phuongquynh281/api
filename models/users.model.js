@@ -47,6 +47,44 @@ module.exports = class User {
     });
   }
 
+  static createEmployee(username, fullName, gender, role) {
+    return new Promise(async (resolve) => {
+      try {
+      
+        let checkExist = await USER.findOne({ username });
+        if (checkExist)
+          return resolve({
+            error: true,
+            message: "Tên đăng nhập đã tồn tại, vui lòng nhập username khác",
+          });
+        const usernameRegex = /^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/;
+        if (!usernameRegex.test(username)) {
+          return {
+            error: true,
+            message: "Tên đăng nhập không hợp lệ",
+          };
+        }
+        let newUser = new USER({
+          fullName,
+          username,
+          password: this.generateRandomPassword(),
+          gender,
+          role,
+        });
+
+        let infoUser = await newUser.save();
+        if (!infoUser)
+          return resolve({
+            error: true,
+            message: "Bị lỗi trong quá trình đăng ký",
+          });
+        resolve({ data: infoUser });
+      } catch (error) {
+        return resolve({ error: true, message: error.message });
+      }
+    });
+  }
+
   static updateInfoUserBasic({
     userID,
     fullName,

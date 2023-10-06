@@ -31,6 +31,30 @@ route.post("/create", async (req, res) => {
   }
 });
 
+route.post("/employee/create", async (req, res) => {
+  const authorizationHeader = req.headers["authorization"];
+  const token = authorizationHeader.substring(7);
+  const user = await verify(token);
+  if (user.data.role !== "SuperAdmin") {
+    res.json({ success: false, message: "Không được phép" }); //Check quyền của người đang đăng nhập
+  }
+  let { username, fullName, gender, role } = req.body;
+  try {
+    let infoUser = await USER_MODEL.createEmployee(
+      username,
+      fullName,
+      gender,
+      role
+    );
+    if (infoUser.error) {
+      return res.status(400).json(infoUser); // Trả về lỗi với mã trạng thái 400 Bad Request
+    }
+    return res.status(200).json(infoUser.data); // Trả về thành công với mã trạng thái 200 OK
+  } catch (error) {
+    return res.status(500).json({ error: true, message: error.message }); // Xử lý lỗi nội bộ với mã trạng thái 500 Internal Server Error
+  }
+});
+
 // Xem thông tin của user
 route.get("/:userID", async (req, res) => {
   const authorizationHeader = req.headers["authorization"];
