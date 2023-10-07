@@ -50,7 +50,7 @@ module.exports = class Exam extends EXAM_COLL {
             message: "Không thể hiển thị danh sách bộ đề",
           });
 
-        return resolve({ error: false, data: listExam });
+        return resolve(listExam);
       } catch (error) {
         return resolve({ error: true, message: error.message });
       }
@@ -120,7 +120,7 @@ module.exports = class Exam extends EXAM_COLL {
         //   { new: true }
         // );
 
-        return resolve({ error: false, data: infoExam });
+        return resolve(infoExam);
       } catch (error) {
         return resolve({ error: true, message: error.message });
       }

@@ -211,7 +211,7 @@ module.exports = class User {
             message: "Không tìm thấy danh sách ứng viên",
           });
 
-        return resolve({ error: false, data: listUser });
+        return resolve(listUser);
       } catch (error) {
         return resolve({ error: true, message: error.message });
       }
@@ -247,7 +247,7 @@ module.exports = class User {
             message: "Không tìm thấy thông tin ứng viên",
           });
 
-        return resolve({ error: false, data: infoUser });
+        return resolve(infoUser);
       } catch (error) {
         return resolve({ error: true, message: error.message });
       }
