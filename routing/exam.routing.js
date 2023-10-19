@@ -7,20 +7,6 @@ const { verify } = require("../utils/jwt");
 // const fs = require("fs");
 // const path = require("path");
 
-// //Danh sách bộ đề
-// route.get("/", async (req, res) => {
-//   const authorizationHeader = req.headers["authorization"];
-//   const token = authorizationHeader.substring(7);
-//   const user = await verify(token);
-//   if (user.data.role !== "SuperAdmin" && user.data.role !== "Interviewer") {
-//     res.json({ success: false, message: "Không được phép" });
-//   }
-//   let { examID } = req.query;
-//   let userID = req.session.user._id;
-//   let infoExam = await EXAM_MODEL.getInfo({ examID, userID });
-//   return res.json(infoExam);
-// });
-
 route.post("/add-exam", async (req, res) => {
   const authorizationHeader = req.headers["authorization"];
   const token = authorizationHeader.substring(7);
@@ -90,36 +76,50 @@ route.get("/info/:examID", async (req, res) => {
   return res.json(infoExam);
 });
 
-// route.get("/remove-exam/:examID", ROLE_ADMIN, async (req, res) => {
-//   let { examID } = req.params;
-//   let resultRemove = await EXAM_MODEL.remove({ examID });
+route.delete("/remove-exam/:examID", async (req, res) => {
+  const authorizationHeader = req.headers["authorization"];
+  const token = authorizationHeader.substring(7);
+  const user = await verify(token);
+  if (user.data.role !== "SuperAdmin" && user.data.role !== "Interviewer") {
+    res.json({ success: false, message: "Không được phép" }); //Check quyền của người đang đăng nhập
+  }
+  let resultRemove = await EXAM_MODEL.remove({ examID });
+  res.json(resultRemove);
+});
 
-//   let pathOrigin = path.resolve(
-//     __dirname,
-//     `../../public/storage/images/${resultRemove.data.file}`
-//   );
+route.post("/add-questions-to-exam/:examID", async (req, res) => {
+  try {
+    const { examID } = req.params; // Lấy examID từ URL
+    const { questionIDs } = req.body; // Lấy danh sách questionIDs từ body
 
-//   fs.unlink(pathOrigin, function (err) {
-//     if (err) return console.log(err);
-//     console.log("file deleted successfully");
-//   });
+    // Gọi hàm để thêm danh sách câu hỏi vào bộ đề
+    const result = await EXAM_MODEL.addQuestionsToExam(examID, questionIDs);
 
-//   res.json(resultRemove);
-// });
+    res.json(result);
+  } catch (error) {
+    res.json(error.message);
+  }
+});
 
-// route.post("/save-exam", checkActive, async (req, res) => {
-//   let { examID } = req.body;
-//   let userID = req.session.user._id;
+route.delete("/remove-questions/:examID", async (req, res) => {
+  const authorizationHeader = req.headers["authorization"];
+  const token = authorizationHeader.substring(7);
+  const user = await verify(token);
+  if (user.data.role !== "SuperAdmin" && user.data.role !== "Interviewer") {
+    res.json({ success: false, message: "Không được phép" }); //Check quyền của người đang đăng nhập
+    return;
+  }
 
-//   let examBySave = await EXAM_MODEL.saveExam({ examID, userID });
-//   res.json(examBySave);
-// });
+  try {
+    const { examID } = req.params;
+    const { questionIDs } = req.body; // Mảng questionIDs cần xóa
 
-// route.post("/cancle-save-exam", checkActive, async (req, res) => {
-//   let { examID } = req.body;
-//   let userID = req.session.user._id;
-//   let cancelSaveExam = await EXAM_MODEL.cancelSaveExam({ examID, userID });
-//   res.json(cancelSaveExam);
-// });
+    const result = await EXAM_MODEL.removeQuestionsFromExam(examID, questionIDs);
+
+    res.json(result);
+  } catch (error) {
+    res.json({ error: true, message: error.message });
+  }
+});
 
 module.exports = route;

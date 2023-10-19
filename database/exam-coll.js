@@ -17,7 +17,7 @@ const ExamSchema = new Schema({
     ref: "user",
   },
 
-  question: [
+  questions: [
     {
       type: Schema.Types.ObjectId,
       ref: "question",

@@ -1,5 +1,6 @@
 const ObjectID = require("mongoose").Types.ObjectId;
 const EXAM_COLL = require("../database/exam-coll");
+const QUESTION_COLL = require("../database/question-coll")
 const USER_COLL = require("../database/user-coll");
 const { sign, verify } = require("../utils/jwt");
 
@@ -36,20 +37,20 @@ module.exports = class Exam extends EXAM_COLL {
       }
     });
   }
-
   static getList() {
     return new Promise(async (resolve) => {
       try {
-        let listExam = await EXAM_COLL.find().sort({ createAt: -1 });
-        // .skip(perPage * page - perPage)
-        // .limit(perPage);
-
-        if (!listExam)
+        let listExam = await EXAM_COLL.find()
+          .sort({ createAt: -1 })
+          .populate('questions'); // Sử dụng populate để thêm dữ liệu câu hỏi
+  
+        if (!listExam) {
           return resolve({
             error: true,
             message: "Không thể hiển thị danh sách bộ đề",
           });
-
+        }
+  
         return resolve({ error: false, data: listExam });
       } catch (error) {
         return resolve({ error: true, message: error.message });
@@ -242,10 +243,7 @@ module.exports = class Exam extends EXAM_COLL {
 
   static addQuestionsToExam(examID, questionIDs) {
     return new Promise(async (resolve) => {
-      try {
-        // Kiểm tra xem examID có hợp lệ không
-  
-        // Tìm bộ đề theo examID
+      try {   
         const exam = await EXAM_COLL.findById(examID);
   
         if (!exam) {
@@ -258,7 +256,9 @@ module.exports = class Exam extends EXAM_COLL {
         for (const questionID of questionIDs) {
           // Tìm câu hỏi theo questionID
           const question = await QUESTION_COLL.findById(questionID);
-  
+          if (!exam.questions) {
+            exam.questions = []; // Khởi tạo exam.questions là một mảng rỗng nếu nó chưa tồn tại
+          }
           if (question) {
             // Thêm questionID vào mảng câu hỏi của bộ đề
             exam.questions.push(questionID);
@@ -268,13 +268,50 @@ module.exports = class Exam extends EXAM_COLL {
   
         // Lưu thay đổi vào cơ sở dữ liệu
         const savedExam = await exam.save();
-  
+        exam.question = addedQuestions,
+
         resolve({
           error: false,
           message: "Các câu hỏi đã được thêm vào bộ đề.",
           data: {
+            exam: savedExam
+          },
+        });
+      } catch (error) {
+        return resolve({ error: true, message: error.message });
+      }
+    });
+  }
+  static removeQuestionsFromExam(examID, questionIDs) {
+    return new Promise(async (resolve) => {
+      try {
+        const exam = await EXAM_COLL.findById(examID);
+  
+        if (!exam) {
+          return resolve({ error: true, message: "Bộ đề không tồn tại." });
+        }
+  
+        const removedQuestions = [];
+  
+        // Duyệt qua danh sách questionIDs và xóa từng câu hỏi khỏi bộ đề
+        for (const questionID of questionIDs) {
+          // Kiểm tra xem questionID có tồn tại trong mảng câu hỏi của bộ đề hay không
+          if (exam.questions && Array.isArray(exam.questions) && exam.questions.includes(questionID)) {
+            // Lọc ra các câu hỏi mà bạn muốn giữ lại trong bộ đề
+            exam.questions = exam.questions.filter((question) => question !== questionID);
+            removedQuestions.push(questionID);
+          }
+        }
+  
+        // Lưu thay đổi vào cơ sở dữ liệu
+        const savedExam = await exam.save();
+  
+        resolve({
+          error: false,
+          message: "Các câu hỏi đã được xóa khỏi bộ đề.",
+          data: {
             exam: savedExam,
-            addedQuestions,
+            removedQuestions: removedQuestions,
           },
         });
       } catch (error) {

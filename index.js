@@ -30,8 +30,8 @@ app.use(
 const uri = "mongodb://127.0.0.1/tracnghiemOmatech";
 
 mongoose.connect(uri, { useNewUrlParser: true });
-const USER_ROUTER = require("../nhom22_tracnghiemapi/routing/user.routing");
-const EXAM_ROUTER = require("../nhom22_tracnghiemapi/routing/exam.routing");
+const USER_ROUTER = require("../api/routing/user.routing");
+const EXAM_ROUTER = require("../api/routing/exam.routing");
 const QUESTION_ROUTER = require("../api/routing/question.routing");
 
 app.use(passport.initialize());
@@ -39,7 +39,7 @@ app.use(passport.session());
 
 app.use("/user", USER_ROUTER);
 app.use("/exam", EXAM_ROUTER);
-app.user("/question", QUESTION_ROUTER);
+app.use("/question", QUESTION_ROUTER);
 
 async function hashPassword() {}
 hashPassword();
