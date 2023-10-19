@@ -50,7 +50,7 @@ module.exports = class Exam extends EXAM_COLL {
             message: "Không thể hiển thị danh sách bộ đề",
           });
 
-        return resolve(listExam);
+        return resolve({ error: false, data: listExam });
       } catch (error) {
         return resolve({ error: true, message: error.message });
       }
@@ -120,7 +120,7 @@ module.exports = class Exam extends EXAM_COLL {
         //   { new: true }
         // );
 
-        return resolve(infoExam);
+        return resolve({ error: false, data: infoExam });
       } catch (error) {
         return resolve({ error: true, message: error.message });
       }
@@ -168,33 +168,33 @@ module.exports = class Exam extends EXAM_COLL {
 
   
 
-  //   static remove({ examID }) {
-  //     return new Promise(async (resolve) => {
-  //       try {
-  //         if (!ObjectID.isValid(examID))
-  //           return resolve({ error: true, message: "params_invalid" });
+    static remove({ examID }) {
+      return new Promise(async (resolve) => {
+        try {
+          if (!ObjectID.isValid(examID))
+            return resolve({ error: true, message: "params_invalid" });
 
-  //         let infoAfterRemove = await EXAM_COLL.findByIdAndDelete(examID);
+          let infoAfterRemove = await EXAM_COLL.findByIdAndDelete(examID);
 
-  //         let infoQuestionRemove = await QUESTION_COLL.deleteMany({
-  //           exam: examID,
-  //         });
+          let infoQuestionRemove = await QUESTION_COLL.deleteMany({
+            exam: examID,
+          });
 
-  //         let infoCommentRemove = await COMMENT_COLL.deleteMany({ exam: examID });
+          let infoCommentRemove = await COMMENT_COLL.deleteMany({ exam: examID });
 
-  //         if (!infoAfterRemove)
-  //           return resolve({ error: true, message: "cannot_remove_data" });
+          if (!infoAfterRemove)
+            return resolve({ error: true, message: "cannot_remove_data" });
 
-  //         return resolve({
-  //           error: false,
-  //           data: infoAfterRemove,
-  //           message: "remove_data_success",
-  //         });
-  //       } catch (error) {
-  //         return resolve({ error: true, message: error.message });
-  //       }
-  //     });
-  //   }
+          return resolve({
+            error: false,
+            data: infoAfterRemove,
+            message: "remove_data_success",
+          });
+        } catch (error) {
+          return resolve({ error: true, message: error.message });
+        }
+      });
+    }
 
   //   //Lưu đề thi
   //   static saveExam({ examID, userID }) {
@@ -239,4 +239,47 @@ module.exports = class Exam extends EXAM_COLL {
   //       }
   //     });
   //   }
+
+  static addQuestionsToExam(examID, questionIDs) {
+    return new Promise(async (resolve) => {
+      try {
+        // Kiểm tra xem examID có hợp lệ không
+  
+        // Tìm bộ đề theo examID
+        const exam = await EXAM_COLL.findById(examID);
+  
+        if (!exam) {
+          return resolve({ error: true, message: "Bộ đề không tồn tại." });
+        }
+  
+        const addedQuestions = [];
+  
+        // Duyệt qua danh sách questionIDs và thêm từng câu hỏi vào bộ đề
+        for (const questionID of questionIDs) {
+          // Tìm câu hỏi theo questionID
+          const question = await QUESTION_COLL.findById(questionID);
+  
+          if (question) {
+            // Thêm questionID vào mảng câu hỏi của bộ đề
+            exam.questions.push(questionID);
+            addedQuestions.push(question);
+          }
+        }
+  
+        // Lưu thay đổi vào cơ sở dữ liệu
+        const savedExam = await exam.save();
+  
+        resolve({
+          error: false,
+          message: "Các câu hỏi đã được thêm vào bộ đề.",
+          data: {
+            exam: savedExam,
+            addedQuestions,
+          },
+        });
+      } catch (error) {
+        return resolve({ error: true, message: error.message });
+      }
+    });
+  }
 };
