@@ -5,17 +5,17 @@ const USER_COLL = require("../database/user-coll");
 const { sign, verify } = require("../utils/jwt");
 
 module.exports = class Exam extends EXAM_COLL {
-  static insert({ name, description, levelDifficult, timeDoTest, createAt }) {
+  static insert({ name, description, level, timeDoTest, createAt }) {
     return new Promise(async (resolve) => {
       try {
-        if (!name || isNaN(Number(levelDifficult)))
+        if (!name || isNaN(Number(level)))
           return resolve({ error: true, message: "Dữ liệu không hợp lệ" });
 
         let dataInsert = {
           name,
           description,
           timeDoTest,
-          levelDifficult,
+          level,
           createAt,
         };
 
@@ -37,20 +37,24 @@ module.exports = class Exam extends EXAM_COLL {
       }
     });
   }
-  static getList() {
+  static getList(level) {
     return new Promise(async (resolve) => {
       try {
-        let listExam = await EXAM_COLL.find()
-          .sort({ createAt: -1 })
-          .populate('questions'); // Sử dụng populate để thêm dữ liệu câu hỏi
+        let query = EXAM_COLL.find().sort({ createAt: -1 }).populate('questions');
   
-        if (!listExam) {
-          return resolve({
-            error: true,
-            message: "Không thể hiển thị danh sách bộ đề",
-          });
+        if (level) {
+          query = query.where('level').equals(level);
         }
   
+        let listExam = await query.exec();
+    
+        if (!listExam || listExam.length === 0) {
+          return resolve({
+            error: true,
+            message: "Không tìm thấy bộ đề với mức độ khó này",
+          });
+        }
+    
         return resolve({ error: false, data: listExam });
       } catch (error) {
         return resolve({ error: true, message: error.message });
@@ -62,7 +66,7 @@ module.exports = class Exam extends EXAM_COLL {
     name,
     description,
     timeDoTest,
-    levelDifficult,
+    level,
     createAt
   }) {
     return new Promise(async (resolve) => {
@@ -74,7 +78,7 @@ module.exports = class Exam extends EXAM_COLL {
         let dataUpdate = {
           name,
           description,
-          levelDifficult,
+          level,
           timeDoTest,
           createAt
         };
@@ -196,50 +200,6 @@ module.exports = class Exam extends EXAM_COLL {
         }
       });
     }
-
-  //   //Lưu đề thi
-  //   static saveExam({ examID, userID }) {
-  //     return new Promise(async (resolve) => {
-  //       try {
-  //         if (!ObjectID.isValid(examID, userID))
-  //           return resolve({ error: true, message: "params_invalid" });
-
-  //         let saveExam = await EXAM_COLL.findByIdAndUpdate(
-  //           examID,
-  //           {
-  //             $addToSet: { saveExam: userID },
-  //           },
-  //           { new: true }
-  //         );
-
-  //         return resolve({ error: false, data: saveExam });
-  //       } catch (error) {
-  //         return resolve({ error: true, message: error.message });
-  //       }
-  //     });
-  //   }
-
-  //   //Bỏ lưu
-  //   static cancelSaveExam({ examID, userID }) {
-  //     return new Promise(async (resolve) => {
-  //       try {
-  //         if (!ObjectID.isValid(examID, userID))
-  //           return resolve({ error: true, message: "params_invalid" });
-
-  //         let cancelSaveExam = await EXAM_COLL.findByIdAndUpdate(
-  //           examID,
-  //           {
-  //             $pull: { saveExam: userID },
-  //           },
-  //           { new: true }
-  //         );
-
-  //         return resolve({ error: false, data: cancelSaveExam });
-  //       } catch (error) {
-  //         return resolve({ error: true, message: error.message });
-  //       }
-  //     });
-  //   }
 
   static addQuestionsToExam(examID, questionIDs) {
     return new Promise(async (resolve) => {

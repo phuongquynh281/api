@@ -28,9 +28,9 @@ const ExamSchema = new Schema({
   timeDoTest: String,
 
   //Độ khó---- 0: Dễ || 1: Vừa || 2: Khó
-  levelDifficult: {
+  level: {
     type: Number,
-    default: 1,
+    default: 0,
   },
 
   result: [

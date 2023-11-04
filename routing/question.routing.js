@@ -27,14 +27,25 @@ route.get("/list-question", async (req, res) => {
   const authorizationHeader = req.headers["authorization"];
   const token = authorizationHeader.substring(7);
   const user = await verify(token);
+
   if (user.data.role !== "SuperAdmin") {
-    res.json({ success: false, message: "Không được phép" }); //Check quyền của người đang đăng nhập
+    return res.json({ success: false, message: "Không được phép" });
   }
+
+  const level = req.query.level; 
+
   try {
-    let listQuestion = await QUESTION_MODEL.getList();
+    let listQuestion;
+    
+    if (level) {
+      listQuestion = await QUESTION_MODEL.getList(level);
+    } else {
+      listQuestion = await QUESTION_MODEL.getList();
+    }
+
     return res.json(listQuestion);
   } catch (error) {
-    res.json(error.message);
+    return res.json(error.message);
   }
 });
 

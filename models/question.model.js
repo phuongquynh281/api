@@ -22,14 +22,24 @@ module.exports = class Question extends QUESTION_COLL {
     });
   }
 
-  static getList() {
+  static getList(level) {
     return new Promise(async (resolve) => {
       try {
-        let listQuestion = await QUESTION_COLL.find();
-
-        if (!listQuestion)
-          return resolve({ error: true, message: "cannot_get_list_data" });
-
+        let query = QUESTION_COLL.find();
+  
+        if (level) {
+          query = query.where('level').equals(level);
+        }
+  
+        let listQuestion = await query.exec();
+  
+        if (!listQuestion || listQuestion.length === 0) {
+          return resolve({
+            error: true,
+            message: "Không tìm thấy câu hỏi với mức độ khó này",
+          });
+        }
+  
         return resolve({ error: false, data: listQuestion });
       } catch (error) {
         return resolve({ error: true, message: error.message });
