@@ -19,7 +19,8 @@ module.exports = class User {
             error: true,
             message: "Tên đăng nhập đã tồn tại, vui lòng nhập username khác",
           });
-        const usernameRegex = /^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/;
+        const usernameRegex =
+          /^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/;
         if (!usernameRegex.test(username)) {
           return {
             error: true,
@@ -50,14 +51,14 @@ module.exports = class User {
   static createEmployee(username, fullName, gender, role) {
     return new Promise(async (resolve) => {
       try {
-      
         let checkExist = await USER.findOne({ username });
         if (checkExist)
           return resolve({
             error: true,
             message: "Tên đăng nhập đã tồn tại, vui lòng nhập username khác",
           });
-        const usernameRegex = /^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/;
+        const usernameRegex =
+          /^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/;
         if (!usernameRegex.test(username)) {
           return {
             error: true,
@@ -178,10 +179,10 @@ module.exports = class User {
         if (!infoUser)
           return resolve({ error: true, message: "Tài khoản không tồn tại" });
 
-          const checkPass = password === infoUser.password;
+        const checkPass = password === infoUser.password;
 
-          if (!checkPass)
-              return resolve({ error: true, message: "Sai mật khẩu" });
+        if (!checkPass)
+          return resolve({ error: true, message: "Sai mật khẩu" });
 
         // await delete infoUser.password;
 
@@ -310,5 +311,31 @@ module.exports = class User {
     }
 
     return password;
+  }
+  static userById(userId) {
+    return new Promise(async (resolve) => {
+      try {
+        if (!ObjectID.isValid(userId))
+          return resolve({ error: true, message: "params_invalid" });
+  
+        let user = await USER.findById(userId);
+        // console.log(user.exam);
+
+        if (!user)
+          return resolve({
+            error: true,
+            message: "Không tìm thấy thông tin người dùng",
+          });
+  
+        // // Sử dụng .populate("exam") để populate thuộc tính "exam" của đối tượng user
+        // await user.populate("exam").execPopulate();
+        // console.log(user.exam);
+        await user.populate("exam").execPopulate();
+
+        return resolve({ error: false, data: user });
+      } catch (error) {
+        return resolve({ error: true, message: error.message });
+      }
+    });
   }
 };

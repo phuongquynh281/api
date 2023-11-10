@@ -40,6 +40,11 @@ const userSchema = new Schema({
     ref: "user",
   },
 
+  exam: {
+    type: Schema.Types.ObjectId,
+    ref: "exam",
+  },
+
   //Người cập nhật
   userUpdate: {
     type: Schema.Types.ObjectId,

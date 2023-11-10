@@ -82,7 +82,7 @@ module.exports = class Result extends RESULT_COLL {
           return resolve({ error: true, message: "params_invalid" });
 
         let infoResult = await RESULT_COLL.findById(resultID).populate(
-          "author exam subject"
+          "exam"
         );
 
         if (!infoResult)
