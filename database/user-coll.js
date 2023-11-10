@@ -44,7 +44,13 @@ const userSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: "exam",
   },
-
+  
+  questions: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: "question",
+    },
+  ],
   //Người cập nhật
   userUpdate: {
     type: Schema.Types.ObjectId,

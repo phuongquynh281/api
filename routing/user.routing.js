@@ -331,8 +331,10 @@ route.get("/exam/of/me", async (req, res) => {
 
   try {
     const userID = user.data._id;
-    const userWithExam = await USER_COLL.findById(userID).populate("exam");
-
+    const userWithExam = await USER_COLL.findById(userID).populate({
+      path: "exam",
+      populate: { path: "questions" },
+    });
     if (!userWithExam.exam) {
       return res
         .status(404)
