@@ -25,7 +25,7 @@ const ExamSchema = new Schema({
   ],
 
   //Thời gian đếm ngược
-  timeDoTest: String,
+  timeDoTest: Number,
 
   //Độ khó---- 0: Dễ || 1: Vừa || 2: Khó
   level: {

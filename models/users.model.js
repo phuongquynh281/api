@@ -178,11 +178,12 @@ module.exports = class User {
         if (!infoUser)
           return resolve({ error: true, message: "Tài khoản không tồn tại" });
 
-        const checkPass = await compare(password, infoUser.password);
-        if (!checkPass)
-          return resolve({ error: true, message: "Sai mật khẩu" });
+          const checkPass = password === infoUser.password;
 
-        await delete infoUser.password;
+          if (!checkPass)
+              return resolve({ error: true, message: "Sai mật khẩu" });
+
+        // await delete infoUser.password;
 
         let token = await sign({
           data: {

@@ -1,7 +1,10 @@
 const route = require("express").Router();
 const USER_MODEL = require("../models/users.model");
+const EXAM_MODEL = require("../models/exam.model");
+const RESULT_MODEL = require("../models/result")
 const { verify } = require("../utils/jwt");
 const { updateInfoUserBasic } = require("../models/users.model");
+const { ObjectID } = require("mongodb"); // Import ObjectID from mongodb
 
 route.get("/me", async (req, res) => {
   const authorizationHeader = req.headers["authorization"];
@@ -227,6 +230,85 @@ route.post("/change-password", async (req, res) => {
 route.get("/logout", async (req, res) => {
   req.session.token = undefined;
   return res.redirect("/");
+});
+
+route.get("/exam/:examID", async (req, res) => {
+  const authorizationHeader = req.headers["authorization"];
+  const token = authorizationHeader.substring(7);
+  const user = await verify(token);
+  if (user.data.role !== "Interviewee") {
+    res.json({ success: false, message: "Không được phép" }); // Check quyền của người đang đăng nhập
+    return;
+  }
+
+  try {
+    const { examID } = req.params;
+
+    // Tìm bài kiểm tra trong cơ sở dữ liệu
+    const exam = await EXAM_MODEL.findById(examID);
+
+    if (!exam) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy bài kiểm tra' });
+    }
+
+    // Kiểm tra xem bài kiểm tra đã được bắt đầu chưa
+    if (exam.timeDoTest <= 0) {
+      return res.status(400).json({ success: false, message: 'Thời gian kiểm tra không hợp lệ' });
+    }
+
+    // Đặt thời gian đếm ngược bằng thời gian thi
+    exam.timeRemaining = exam.timeDoTest * 60; // chuyển đổi thành giây
+
+    await exam.save();
+
+    // Trả về kết quả thành công
+    return res.json({ success: true, message: 'Bài kiểm tra đã bắt đầu', timeRemaining: exam.timeRemaining });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Xem kết quả thi
+route.get("/exam/thi/thitn/result", async (req, res) => {
+  const authorizationHeader = req.headers["authorization"];
+  const token = authorizationHeader.substring(7);
+  const user = await verify(token);
+  if (user.data.role !== "Interviewee" && user.data.role !== "SupperAdmin") {
+    res.json({ success: false, message: "Không được phép" });
+    return;
+  }
+  let { resultID } = req.query;
+  let { examID } = req.query;
+  let infoResult = await RESULT_MODEL.getInfo({ resultID });
+  let infoExam = await EXAM_MODEL.getInfo({ examID });
+  return res.json(infoResult.data)
+  // return res.json(infoExam.data)
+
+});
+
+// Lấy kết quả
+route.post("/exam/result", async (req, res) => {
+  const authorizationHeader = req.headers["authorization"];
+  const token = authorizationHeader.substring(7);
+  const user = await verify(token);
+  if (user.data.role !== "Interviewee") {
+    res.json({ success: false, message: "Không được phép" });
+    return;
+  }
+  let userID = req.session.user._id;
+
+  let { point, falseArr, trueArr, examID, unfinishQuestion } = req.body;
+
+  let resultInsert = await RESULT_MODEL.insert({
+    point,
+    falseArr,
+    trueArr,
+    examID,
+    unfinishQuestion,
+    createAt: Date.now(),
+    userID,
+  });
+  return res.json(resultInsert);
 });
 
 module.exports = route;

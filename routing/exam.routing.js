@@ -244,4 +244,39 @@ route.post("/auto/create", async (req, res) => {
   }
 });
 
+route.post("/assign-exam/:examID/:candidateID", async (req, res) => {
+  try {
+    const { examID, candidateID } = req.params;
+
+    // Kiểm tra tính hợp lệ của examID và candidateID(ứng viên)
+    // if (!ObjectID.isValid(examID) || !ObjectID.isValid(candidateID)) {
+    //   return res.status(400).json({ success: false, message: 'bộ đề hoặc ứng viên không hợp lệ' });
+    // }
+
+    // Tìm bộ đề trong cơ sở dữ liệu
+    const exam = await EXAM_MODEL.findById(examID);
+    if (!exam) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy bộ đề' });
+    }
+
+    // Tìm ứng viên trong cơ sở dữ liệu
+    const candidate = await USER_MODEL.findById(candidateID);
+    if (!candidate) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy ứng viên' });
+    }
+
+    // Gán bộ đề cho ứng viên
+    candidate.exam = exam;
+
+    // Lưu thông tin đã cập nhật của ứng viên
+    await candidate.save();
+
+    return res.json({ success: true, message: 'Bộ đề đã được gán cho ứng viên' });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+
+
 module.exports = route;
