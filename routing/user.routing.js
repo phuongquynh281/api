@@ -303,7 +303,7 @@ route.post("/exam/result", async (req, res) => {
     res.json({ success: false, message: "Không được phép" });
     return;
   }
-  let userID = req.session.user._id;
+    const userID = user.data._id;
 
   let { point, falseArr, trueArr, examID, unfinishQuestion } = req.body;
 
