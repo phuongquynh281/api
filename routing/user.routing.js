@@ -2,7 +2,7 @@ const route = require("express").Router();
 const USER_MODEL = require("../models/users.model");
 const EXAM_MODEL = require("../models/exam.model");
 const RESULT_MODEL = require("../models/result");
-const USER_COLL = require("../database/user-coll")
+const USER_COLL = require("../database/user-coll");
 const { verify } = require("../utils/jwt");
 const { updateInfoUserBasic } = require("../models/users.model");
 const { ObjectID } = require("mongodb"); // Import ObjectID from mongodb
@@ -282,7 +282,12 @@ route.get("/exam/thi/thitn/result", async (req, res) => {
   const authorizationHeader = req.headers["authorization"];
   const token = authorizationHeader.substring(7);
   const user = await verify(token);
-  if (user.data.role !== "Interviewee" && user.data.role !== "SupperAdmin") {
+  if (
+    user.data.role !== "SuperAdmin" &&
+    user.data.role !== "Interviewer" &&
+    user.data.role !== "HRM" &&
+    user.data.role !== "Interviewee"
+  ) {
     res.json({ success: false, message: "Không được phép" });
     return;
   }
@@ -303,7 +308,7 @@ route.post("/exam/result", async (req, res) => {
     res.json({ success: false, message: "Không được phép" });
     return;
   }
-    const userID = user.data._id;
+  const userID = user.data._id;
 
   let { point, falseArr, trueArr, examID, unfinishQuestion } = req.body;
 
