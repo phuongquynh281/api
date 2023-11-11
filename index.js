@@ -33,14 +33,14 @@ mongoose.connect(uri, { useNewUrlParser: true });
 const USER_ROUTER = require("../api/routing/user.routing");
 const EXAM_ROUTER = require("../api/routing/exam.routing");
 const QUESTION_ROUTER = require("../api/routing/question.routing");
-
+const RESULT_ROUTER = require("../api/routing/result.routing");
 app.use(passport.initialize());
 app.use(passport.session());
 
 app.use("/user", USER_ROUTER);
 app.use("/exam", EXAM_ROUTER);
 app.use("/question", QUESTION_ROUTER);
-
+app.use("/result", RESULT_ROUTER);
 async function hashPassword() {}
 hashPassword();
 const PORT = process.env.PORT || 8000;

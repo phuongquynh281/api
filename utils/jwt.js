@@ -19,5 +19,5 @@ function verify(token) {
     });
   });
 }
-
+// accept Token
 module.exports = { sign, verify };
