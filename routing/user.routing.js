@@ -311,6 +311,7 @@ route.post("/exam/result", async (req, res) => {
   const userID = user.data._id;
 
   let { point, falseArr, trueArr, examID, unfinishQuestion } = req.body;
+  console.log(req.body);
 
   let resultInsert = await RESULT_MODEL.insert({
     point,
