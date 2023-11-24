@@ -41,21 +41,23 @@ module.exports = class Exam extends EXAM_COLL {
     return new Promise(async (resolve) => {
       try {
         let query = EXAM_COLL.find().sort({ createAt: -1 }).populate('questions');
-  
+
         if (level) {
           query = query.where('level').equals(level);
         }
-  
+
         let listExam = await query.exec();
-    
+
         if (!listExam || listExam.length === 0) {
           return resolve({
             error: true,
             message: "Không tìm thấy bộ đề với mức độ khó này",
           });
         }
-    
-        return resolve({ error: false, data: listExam });
+
+
+
+        return resolve(listExam);
       } catch (error) {
         return resolve({ error: true, message: error.message });
       }
@@ -171,47 +173,47 @@ module.exports = class Exam extends EXAM_COLL {
   //     });
   //   }
 
-  
 
-    static remove({ examID }) {
-      return new Promise(async (resolve) => {
-        try {
-          if (!ObjectID.isValid(examID))
-            return resolve({ error: true, message: "params_invalid" });
 
-          let infoAfterRemove = await EXAM_COLL.findByIdAndDelete(examID);
+  static remove({ examID }) {
+    return new Promise(async (resolve) => {
+      try {
+        if (!ObjectID.isValid(examID))
+          return resolve({ error: true, message: "params_invalid" });
 
-          let infoQuestionRemove = await QUESTION_COLL.deleteMany({
-            exam: examID,
-          });
+        let infoAfterRemove = await EXAM_COLL.findByIdAndDelete(examID);
 
-          let infoCommentRemove = await COMMENT_COLL.deleteMany({ exam: examID });
+        let infoQuestionRemove = await QUESTION_COLL.deleteMany({
+          exam: examID,
+        });
 
-          if (!infoAfterRemove)
-            return resolve({ error: true, message: "cannot_remove_data" });
+        let infoCommentRemove = await COMMENT_COLL.deleteMany({ exam: examID });
 
-          return resolve({
-            error: false,
-            data: infoAfterRemove,
-            message: "remove_data_success",
-          });
-        } catch (error) {
-          return resolve({ error: true, message: error.message });
-        }
-      });
-    }
+        if (!infoAfterRemove)
+          return resolve({ error: true, message: "cannot_remove_data" });
+
+        return resolve({
+          error: false,
+          data: infoAfterRemove,
+          message: "remove_data_success",
+        });
+      } catch (error) {
+        return resolve({ error: true, message: error.message });
+      }
+    });
+  }
 
   static addQuestionsToExam(examID, questionIDs) {
     return new Promise(async (resolve) => {
-      try {   
+      try {
         const exam = await EXAM_COLL.findById(examID);
-  
+
         if (!exam) {
           return resolve({ error: true, message: "Bộ đề không tồn tại." });
         }
-  
+
         const addedQuestions = [];
-  
+
         // Duyệt qua danh sách questionIDs và thêm từng câu hỏi vào bộ đề
         for (const questionID of questionIDs) {
           // Tìm câu hỏi theo questionID
@@ -225,18 +227,18 @@ module.exports = class Exam extends EXAM_COLL {
             addedQuestions.push(question);
           }
         }
-  
+
         // Lưu thay đổi vào cơ sở dữ liệu
         const savedExam = await exam.save();
         exam.question = addedQuestions,
 
-        resolve({
-          error: false,
-          message: "Các câu hỏi đã được thêm vào bộ đề.",
-          data: {
-            exam: savedExam
-          },
-        });
+          resolve({
+            error: false,
+            message: "Các câu hỏi đã được thêm vào bộ đề.",
+            data: {
+              exam: savedExam
+            },
+          });
       } catch (error) {
         return resolve({ error: true, message: error.message });
       }
@@ -246,13 +248,13 @@ module.exports = class Exam extends EXAM_COLL {
     return new Promise(async (resolve) => {
       try {
         const exam = await EXAM_COLL.findById(examID);
-  
+
         if (!exam) {
           return resolve({ error: true, message: "Bộ đề không tồn tại." });
         }
-  
+
         const removedQuestions = [];
-  
+
         // Duyệt qua danh sách questionIDs và xóa từng câu hỏi khỏi bộ đề
         for (const questionID of questionIDs) {
           // Kiểm tra xem questionID có tồn tại trong mảng câu hỏi của bộ đề hay không
@@ -262,10 +264,10 @@ module.exports = class Exam extends EXAM_COLL {
             removedQuestions.push(questionID);
           }
         }
-  
+
         // Lưu thay đổi vào cơ sở dữ liệu
         const savedExam = await exam.save();
-  
+
         resolve({
           error: false,
           message: "Các câu hỏi đã được xóa khỏi bộ đề.",

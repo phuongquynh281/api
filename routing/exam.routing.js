@@ -114,35 +114,35 @@ route.post("/add-questions-to-exam/:examID", async (req, res) => {
     const { examID } = req.params; // Lấy examID từ URL
 
     // Lấy thông tin về bộ đề theo examID
-    const exam = await EXAM_MODEL.getExamById(examID);
+    // const exam = await EXAM_MODEL.getExamById(examID);
 
-    if (!exam || !exam.data) {
-      return res.json({ success: false, message: "Bộ đề không tồn tại" });
-    }
+    // if (!exam || !exam.data) {
+    //   return res.json({ success: false, message: "Bộ đề không tồn tại" });
+    // }
 
-    const { level } = exam.data;
+    // const { level } = exam.data;
 
-    // Lấy danh sách câu hỏi theo mức độ khó
-    const questions = await QUESTION_MODEL.getList(level);
+    // // Lấy danh sách câu hỏi theo mức độ khó
+    // const questions = await QUESTION_MODEL.getList(level);
 
-    if (!questions || !questions.data) {
-      return res.json({
-        success: false,
-        message: "Không tìm thấy câu hỏi với mức độ khó này",
-      });
-    }
+    // if (!questions || !questions.data) {
+    //   return res.json({
+    //     success: false,
+    //     message: "Không tìm thấy câu hỏi với mức độ khó này",
+    //   });
+    // }
 
     const { questionIDs } = req.body; // Lấy danh sách questionIDs từ body
 
     // Lọc danh sách câu hỏi dựa trên questionIDs và levelDifficulty của bộ đề
-    const filteredQuestionIDs = questionIDs.filter((id) =>
-      questions.data.some((question) => question._id.toString() === id)
-    );
+    // const filteredQuestionIDs = questionIDs.filter((id) =>
+    //   questions.data.some((question) => question._id.toString() === id)
+    // );
 
     // Gọi hàm để thêm danh sách câu hỏi vào bộ đề
     const result = await EXAM_MODEL.addQuestionsToExam(
       examID,
-      filteredQuestionIDs
+      questionIDs
     );
 
     res.json(result);
