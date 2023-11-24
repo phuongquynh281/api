@@ -44,6 +44,25 @@ app.use("/result", RESULT_ROUTER);
 async function hashPassword() {}
 hashPassword();
 const PORT = process.env.PORT || 8000;
+const authenticateToken = async (req, res, next) => {
+  const token = req.header('Authorization');
+
+  if (!token) {
+    return res.status(401).json({ message: 'Không được phép truy cập' });
+  }
+
+  try {
+    const decoded = await jwtUtils.verify(token);
+    req.user = decoded;
+    next();
+  } catch (err) {
+    res.status(403).json({ message: 'Cấm truy cập' });
+  }
+};
+
+app.get('/accept-token', authenticateToken, (req, res) => {
+  res.json({ message: 'Accept token', user: req.user });
+});
 
 mongoose.connection.once("open", () => {
   app.listen(PORT, () => console.log(`Server started at PORT ${PORT}`));

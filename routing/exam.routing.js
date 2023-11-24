@@ -15,12 +15,13 @@ route.post("/add-exam", async (req, res) => {
   if (user.data.role !== "SuperAdmin" && user.data.role !== "Interviewer") {
     res.json({ success: false, message: "Không được phép" }); //Check quyền của người đang đăng nhập
   }
-  let { name, description, level, timeDoTest } = req.body;
+  let { name, description, level, timeDoTest, career } = req.body;
 
   const resultInsert = await EXAM_MODEL.insert({
     name,
     description,
     level,
+    career,
     timeDoTest,
     createAt: Date.now(),
   });
@@ -33,25 +34,54 @@ route.get("/list-exam", async (req, res) => {
   const authorizationHeader = req.headers["authorization"];
   const token = authorizationHeader.substring(7);
   const user = await verify(token);
-
   if (user.data.role !== "SuperAdmin" && user.data.role !== "Interviewer") {
-    return res.json({ success: false, message: "Không được phép" });
+    res.json({ success: false, message: "Không được phép" }); //Check quyền của người đang đăng nhập
   }
-
-  const level = req.query.level;
-
   try {
-    let listExam;
+    const user = await verify(token);
 
-    if (level) {
-      listExam = await EXAM_MODEL.getList(level);
-    } else {
-      listExam = await EXAM_MODEL.getList();
+    if (user.data.role !== "SuperAdmin") {
+      return res.json({ success: false, message: "Không được phép" });
     }
 
-    return res.json(listExam);
+    const { level, career, page, pageSize } = req.query;
+
+    const totalItems = await EXAM_MODEL.getCount();
+
+    // Tính toán thông tin phân trang
+    const totalPages = Math.ceil(totalItems / pageSize);
+    const currentPage = parseInt(page);
+    const itemCount =
+      currentPage < totalPages
+        ? parseInt(pageSize)
+        : totalItems - parseInt(pageSize) * (totalPages - 1);
+
+    // Lấy danh sách kết quả với phân trang
+    const infoResultDb = await EXAM_MODEL.getList({
+      level,
+      career,
+      page,
+      pageSize,
+    });
+
+    if (infoResultDb.error) {
+      return res.json({ success: false, message: infoResultDb.message });
+    }
+
+    // Bao gồm thông tin phân trang trong kết quả trả về
+    return res.json({
+      success: true,
+      data: infoResultDb.data,
+      pagination: {
+        totalItems,
+        itemCount,
+        itemsPerPage: parseInt(pageSize),
+        totalPages,
+        currentPage,
+      },
+    });
   } catch (error) {
-    return res.json(error.message);
+    return res.json({ success: false, message: error.message });
   }
 });
 
@@ -63,7 +93,7 @@ route.patch("/:examID", async (req, res) => {
     res.json({ success: false, message: "Không được phép" }); //Check quyền của người đang đăng nhập
   }
   let { examID } = req.params;
-  let { name, description, level, timeDoTest } = req.body;
+  let { name, description, level, timeDoTest,career } = req.body;
 
   const resultUpdate = await EXAM_MODEL.update({
     name,
@@ -71,6 +101,7 @@ route.patch("/:examID", async (req, res) => {
     level,
     timeDoTest,
     examID,
+    career,
     createAt: Date.now(),
   });
 
@@ -256,13 +287,17 @@ route.post("/assign-exam/:examID/:candidateID", async (req, res) => {
     // Tìm bộ đề trong cơ sở dữ liệu
     const exam = await EXAM_MODEL.findById(examID);
     if (!exam) {
-      return res.status(404).json({ success: false, message: 'Không tìm thấy bộ đề' });
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy bộ đề" });
     }
 
     // Tìm ứng viên trong cơ sở dữ liệu
     const candidate = await USER_MODEL.findById(candidateID);
     if (!candidate) {
-      return res.status(404).json({ success: false, message: 'Không tìm thấy ứng viên' });
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy ứng viên" });
     }
 
     // Gán bộ đề cho ứng viên
@@ -271,12 +306,13 @@ route.post("/assign-exam/:examID/:candidateID", async (req, res) => {
     // Lưu thông tin đã cập nhật của ứng viên
     await candidate.save();
 
-    return res.json({ success: true, message: 'Bộ đề đã được gán cho ứng viên' });
+    return res.json({
+      success: true,
+      message: "Bộ đề đã được gán cho ứng viên",
+    });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
   }
 });
-
-
 
 module.exports = route;

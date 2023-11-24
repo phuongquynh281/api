@@ -200,38 +200,68 @@ module.exports = class User {
     });
   }
 
-  static getListEmployee() {
+  static getListEmployee(page, pageSize) {
     return new Promise(async (resolve) => {
       try {
+        const skip = (page - 1) * pageSize;
+  
         let listUser = await USER.find({
-          role: { $in: ["Interviewer", "HRM"] },
-        });
-
-        if (!listUser)
+          role: { $in: ["Interviewer", "HRM"] }
+        }).skip(skip).limit(pageSize);
+  
+        const totalItems = await USER.countDocuments({ role: { $in: ["Interviewer", "HRM"] } });
+        const totalPages = Math.ceil(totalItems / pageSize);
+  
+        if (!listUser || listUser.length === 0) {
           return resolve({
             error: true,
-            message: "Không tìm thấy danh sách ứng viên",
+            message: "Không tìm thấy danh sách nhân viên",
           });
-
-        return resolve(listUser);
+        }
+  
+        return resolve({
+          error: false,
+          data: listUser,
+          pagination: {
+            totalItems,
+            itemsPerPage: parseInt(pageSize),
+            totalPages,
+            currentPage: parseInt(page),
+          },
+        });
       } catch (error) {
         return resolve({ error: true, message: error.message });
       }
     });
   }
-
-  static getListInterviewee() {
+  static getListInterviewee(page, pageSize) {
     return new Promise(async (resolve) => {
       try {
-        let listUser = await USER.find({ role: "Interviewee" });
+        const skip = (page - 1) * pageSize;
+        let listUser = await USER.find({ role: "Interviewee" })
+          .skip(skip)
+          .limit(pageSize);
 
-        if (!listUser)
+        const totalItems = await USER.countDocuments({ role: "Interviewee" });
+        const totalPages = Math.ceil(totalItems / pageSize);
+
+        if (!listUser || listUser.length === 0) {
           return resolve({
             error: true,
             message: "Không tìm thấy danh sách ứng viên",
           });
+        }
 
-        return resolve(listUser);
+        return resolve({
+          error: false,
+          data: listUser,
+          pagination: {
+            totalItems,
+            itemsPerPage: parseInt(pageSize),
+            totalPages,
+            currentPage: parseInt(page),
+          },
+        });
       } catch (error) {
         return resolve({ error: true, message: error.message });
       }
@@ -317,7 +347,7 @@ module.exports = class User {
       try {
         if (!ObjectID.isValid(userId))
           return resolve({ error: true, message: "params_invalid" });
-  
+
         let user = await USER.findById(userId);
         // console.log(user.exam);
 
@@ -326,7 +356,7 @@ module.exports = class User {
             error: true,
             message: "Không tìm thấy thông tin người dùng",
           });
-  
+
         // // Sử dụng .populate("exam") để populate thuộc tính "exam" của đối tượng user
         // await user.populate("exam").execPopulate();
         // console.log(user.exam);
@@ -335,6 +365,17 @@ module.exports = class User {
         return resolve({ error: false, data: user });
       } catch (error) {
         return resolve({ error: true, message: error.message });
+      }
+    });
+  }
+
+  static getCount() {
+    return new Promise(async (resolve) => {
+      try {
+        const count = await USER.countDocuments();
+        resolve(count);
+      } catch (error) {
+        resolve(0);
       }
     });
   }

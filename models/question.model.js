@@ -3,13 +3,14 @@ const QUESTION_COLL = require("../database/question-coll");
 const EXAM_COLL = require("../database/exam-coll");
 
 module.exports = class Question extends QUESTION_COLL {
-  static insert({ nameQuestion, answers, level }) {
+  static insert({ nameQuestion, answers, level, career }) {
     return new Promise(async (resolve) => {
       try {
         let dataInsert = {
           name: nameQuestion,
           answers,
           level,
+          career,
         };
         let infoAfterInsert = new QUESTION_COLL(dataInsert);
         let saveDataInsert = await infoAfterInsert.save();
@@ -22,24 +23,33 @@ module.exports = class Question extends QUESTION_COLL {
     });
   }
 
-  static getList(level) {
+  static getList({ level, career, page = 1, pageSize = 100 }) {
     return new Promise(async (resolve) => {
       try {
         let query = QUESTION_COLL.find();
-  
+
         if (level) {
-          query = query.where('level').equals(level);
+          query = query.where("level").equals(level);
         }
-  
+
+        if (career) {
+          query = query.where("career").equals(career);
+        }
+
+        const skip = (page - 1) * pageSize;
+
+        query = query.skip(skip).limit(pageSize);
+
         let listQuestion = await query.exec();
-  
+
         if (!listQuestion || listQuestion.length === 0) {
           return resolve({
             error: true,
-            message: "Không tìm thấy câu hỏi với mức độ khó này",
+            message:
+              "Không tìm thấy câu hỏi với mức độ khó hoặc vị trí công việc này",
           });
         }
-  
+
         return resolve({ error: false, data: listQuestion });
       } catch (error) {
         return resolve({ error: true, message: error.message });
@@ -84,7 +94,7 @@ module.exports = class Question extends QUESTION_COLL {
     });
   }
 
-  static update({ questionID, nameQuestion, answers, level }) {
+  static update({ questionID, nameQuestion, answers, level,career }) {
     return new Promise(async (resolve) => {
       try {
         if (!ObjectID.isValid(questionID))
@@ -94,6 +104,7 @@ module.exports = class Question extends QUESTION_COLL {
           nameQuestion,
           answers,
           level,
+          career
         };
 
         let infoAfterUpdate = await QUESTION_COLL.findByIdAndUpdate(
@@ -112,6 +123,16 @@ module.exports = class Question extends QUESTION_COLL {
         });
       } catch (error) {
         return resolve({ error: true, message: error.message });
+      }
+    });
+  }
+  static getCount() {
+    return new Promise(async (resolve) => {
+      try {
+        const count = await QUESTION_COLL.countDocuments();
+        resolve(count);
+      } catch (error) {
+        resolve(0);
       }
     });
   }

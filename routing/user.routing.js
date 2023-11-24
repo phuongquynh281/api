@@ -81,39 +81,69 @@ route.get("/:userID", async (req, res) => {
 });
 
 route.get("/list/interviewee", async (req, res) => {
-  const authorizationHeader = req.headers["authorization"];
-  const token = authorizationHeader.substring(7);
-  const user = await verify(token);
-  const { userID } = req.params;
+  try {
+    const authorizationHeader = req.headers["authorization"];
+    const token = authorizationHeader.substring(7);
+    const user = await verify(token);
 
-  if (
-    user.data.role !== "SuperAdmin" &&
-    user.data.role !== "Interviewer" &&
-    user.data.role !== "HRM"
-  ) {
-    res.json({ success: false, message: "Không được phép" }); //Check quyền của người đang đăng nhập
+    if (
+      user.data.role !== "SuperAdmin" &&
+      user.data.role !== "Interviewer" &&
+      user.data.role !== "HRM"
+    ) {
+      return res
+        .status(403)
+        .json({ success: false, message: "Không được phép" });
+    }
+
+    const { page, pageSize } = req.query;
+    const infoUserDb = await USER_MODEL.getListInterviewee(page, pageSize);
+
+    if (infoUserDb.error) {
+      return res.json({ success: false, message: infoUserDb.message });
+    }
+
+    return res.json({
+      success: true,
+      data: infoUserDb.data,
+      pagination: infoUserDb.pagination,
+    });
+  } catch (error) {
+    console.error("Không thể hiển thị danh sách ứng viên", error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Internal Server Error" });
   }
-  const infoUserDb = await USER_MODEL.getListInterviewee(userID);
-  if (!infoUserDb) {
-    res.json({ success: false, message: "Không tìm thấy danh sách ứng viên" });
-  }
-  return res.json(infoUserDb);
 });
 
 route.get("/list/info/employee", async (req, res) => {
-  const authorizationHeader = req.headers["authorization"];
-  const token = authorizationHeader.substring(7);
-  const user = await verify(token);
-  const { userID } = req.params;
+  try {
+    const authorizationHeader = req.headers["authorization"];
+    const token = authorizationHeader.substring(7);
+    const user = await verify(token);
+    const { userID } = req.params;
 
-  if (user.data.role !== "SuperAdmin") {
-    res.json({ success: false, message: "Không được phép" }); //Check quyền của người đang đăng nhập
+    if (user.data.role !== "SuperAdmin") {
+      res.json({ success: false, message: "Không được phép" }); //Check quyền của người đang đăng nhập
+    }
+    const { page, pageSize } = req.query;
+    const infoUserDb = await USER_MODEL.getListEmployee(page, pageSize);
+
+    if (infoUserDb.error) {
+      return res.json({ success: false, message: infoUserDb.message });
+    }
+
+    return res.json({
+      success: true,
+      data: infoUserDb.data,
+      pagination: infoUserDb.pagination,
+    });
+  } catch (error) {
+    console.error("Không thể hiển thị danh sách nhân viên", error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Internal Server Error" });
   }
-  const infoUserDb = await USER_MODEL.getListEmployee(userID);
-  if (!infoUserDb) {
-    res.json({ success: false, message: "Không tìm thấy danh sách nhân viên" });
-  }
-  return res.json(infoUserDb);
 });
 
 // Cập nhật thông tin

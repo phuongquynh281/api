@@ -1,11 +1,11 @@
 const ObjectID = require("mongoose").Types.ObjectId;
 const EXAM_COLL = require("../database/exam-coll");
-const QUESTION_COLL = require("../database/question-coll")
+const QUESTION_COLL = require("../database/question-coll");
 const USER_COLL = require("../database/user-coll");
 const { sign, verify } = require("../utils/jwt");
 
 module.exports = class Exam extends EXAM_COLL {
-  static insert({ name, description, level, timeDoTest, createAt }) {
+  static insert({ name, description, level,career, timeDoTest, createAt }) {
     return new Promise(async (resolve) => {
       try {
         if (!name || isNaN(Number(level)))
@@ -16,6 +16,7 @@ module.exports = class Exam extends EXAM_COLL {
           description,
           timeDoTest,
           level,
+          career,
           createAt,
         };
 
@@ -37,41 +38,43 @@ module.exports = class Exam extends EXAM_COLL {
       }
     });
   }
-  static getList(level) {
+  static getList({ level, career, page = 1, pageSize = 100 }) {
     return new Promise(async (resolve) => {
       try {
-        let query = EXAM_COLL.find().sort({ createAt: -1 }).populate('questions');
-  
+        let query = EXAM_COLL.find()
+          .sort({ createAt: -1 })
+          .populate("questions");
+
         if (level) {
-          query = query.where('level').equals(level);
+          query = query.where("level").equals(level);
         }
-  
+
+        if (career) {
+          query = query.where("career").equals(career);
+        }
+        const skip = (page - 1) * pageSize;
+
+        query = query.skip(skip).limit(pageSize);
+
         let listExam = await query.exec();
-    
+
         if (!listExam || listExam.length === 0) {
           return resolve({
             error: true,
-            message: "Không tìm thấy bộ đề với mức độ khó này",
+            message:
+              "Không tìm thấy bộ đề với mức độ khó hoặc vị trí công việc này",
           });
         }
-    
+
         return resolve({ error: false, data: listExam });
       } catch (error) {
         return resolve({ error: true, message: error.message });
       }
     });
   }
-  static update({
-    examID,
-    name,
-    description,
-    timeDoTest,
-    level,
-    createAt
-  }) {
+  static update({ examID, name, description, timeDoTest, level,career, createAt }) {
     return new Promise(async (resolve) => {
       try {
-
         if (!ObjectID.isValid(examID))
           return resolve({ error: true, message: "Dữ liệu không hợp lệ" });
 
@@ -80,7 +83,8 @@ module.exports = class Exam extends EXAM_COLL {
           description,
           level,
           timeDoTest,
-          createAt
+          career,
+          createAt,
         };
 
         let infoAfterUpdate = await EXAM_COLL.findByIdAndUpdate(
@@ -109,7 +113,7 @@ module.exports = class Exam extends EXAM_COLL {
         if (!ObjectID.isValid(examID, userID))
           return resolve({ error: true, message: "params_invalid" });
 
-        let infoExam = await EXAM_COLL.findById(examID)
+        let infoExam = await EXAM_COLL.findById(examID);
         // .populate(
         //   "subject question user"
         // );
@@ -171,47 +175,45 @@ module.exports = class Exam extends EXAM_COLL {
   //     });
   //   }
 
-  
+  static remove({ examID }) {
+    return new Promise(async (resolve) => {
+      try {
+        if (!ObjectID.isValid(examID))
+          return resolve({ error: true, message: "params_invalid" });
 
-    static remove({ examID }) {
-      return new Promise(async (resolve) => {
-        try {
-          if (!ObjectID.isValid(examID))
-            return resolve({ error: true, message: "params_invalid" });
+        let infoAfterRemove = await EXAM_COLL.findByIdAndDelete(examID);
 
-          let infoAfterRemove = await EXAM_COLL.findByIdAndDelete(examID);
+        let infoQuestionRemove = await QUESTION_COLL.deleteMany({
+          exam: examID,
+        });
 
-          let infoQuestionRemove = await QUESTION_COLL.deleteMany({
-            exam: examID,
-          });
+        let infoCommentRemove = await COMMENT_COLL.deleteMany({ exam: examID });
 
-          let infoCommentRemove = await COMMENT_COLL.deleteMany({ exam: examID });
+        if (!infoAfterRemove)
+          return resolve({ error: true, message: "cannot_remove_data" });
 
-          if (!infoAfterRemove)
-            return resolve({ error: true, message: "cannot_remove_data" });
-
-          return resolve({
-            error: false,
-            data: infoAfterRemove,
-            message: "remove_data_success",
-          });
-        } catch (error) {
-          return resolve({ error: true, message: error.message });
-        }
-      });
-    }
+        return resolve({
+          error: false,
+          data: infoAfterRemove,
+          message: "remove_data_success",
+        });
+      } catch (error) {
+        return resolve({ error: true, message: error.message });
+      }
+    });
+  }
 
   static addQuestionsToExam(examID, questionIDs) {
     return new Promise(async (resolve) => {
-      try {   
+      try {
         const exam = await EXAM_COLL.findById(examID);
-  
+
         if (!exam) {
           return resolve({ error: true, message: "Bộ đề không tồn tại." });
         }
-  
+
         const addedQuestions = [];
-  
+
         // Duyệt qua danh sách questionIDs và thêm từng câu hỏi vào bộ đề
         for (const questionID of questionIDs) {
           // Tìm câu hỏi theo questionID
@@ -225,18 +227,17 @@ module.exports = class Exam extends EXAM_COLL {
             addedQuestions.push(question);
           }
         }
-  
+
         // Lưu thay đổi vào cơ sở dữ liệu
         const savedExam = await exam.save();
-        exam.question = addedQuestions,
-
-        resolve({
-          error: false,
-          message: "Các câu hỏi đã được thêm vào bộ đề.",
-          data: {
-            exam: savedExam
-          },
-        });
+        (exam.question = addedQuestions),
+          resolve({
+            error: false,
+            message: "Các câu hỏi đã được thêm vào bộ đề.",
+            data: {
+              exam: savedExam,
+            },
+          });
       } catch (error) {
         return resolve({ error: true, message: error.message });
       }
@@ -246,26 +247,32 @@ module.exports = class Exam extends EXAM_COLL {
     return new Promise(async (resolve) => {
       try {
         const exam = await EXAM_COLL.findById(examID);
-  
+
         if (!exam) {
           return resolve({ error: true, message: "Bộ đề không tồn tại." });
         }
-  
+
         const removedQuestions = [];
-  
+
         // Duyệt qua danh sách questionIDs và xóa từng câu hỏi khỏi bộ đề
         for (const questionID of questionIDs) {
           // Kiểm tra xem questionID có tồn tại trong mảng câu hỏi của bộ đề hay không
-          if (exam.questions && Array.isArray(exam.questions) && exam.questions.includes(questionID)) {
+          if (
+            exam.questions &&
+            Array.isArray(exam.questions) &&
+            exam.questions.includes(questionID)
+          ) {
             // Lọc ra các câu hỏi mà bạn muốn giữ lại trong bộ đề
-            exam.questions = exam.questions.filter((question) => question !== questionID);
+            exam.questions = exam.questions.filter(
+              (question) => question !== questionID
+            );
             removedQuestions.push(questionID);
           }
         }
-  
+
         // Lưu thay đổi vào cơ sở dữ liệu
         const savedExam = await exam.save();
-  
+
         resolve({
           error: false,
           message: "Các câu hỏi đã được xóa khỏi bộ đề.",
@@ -276,6 +283,17 @@ module.exports = class Exam extends EXAM_COLL {
         });
       } catch (error) {
         return resolve({ error: true, message: error.message });
+      }
+    });
+  }
+
+  static getCount() {
+    return new Promise(async (resolve) => {
+      try {
+        const count = await EXAM_COLL.countDocuments();
+        resolve(count);
+      } catch (error) {
+        resolve(0);
       }
     });
   }

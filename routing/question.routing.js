@@ -10,12 +10,13 @@ route.post("/add-question", async (req, res) => {
     res.json({ success: false, message: "Không được phép" }); //Check quyền của người đang đăng nhập
   }
   try {
-    let { nameQuestion, answers, level } = req.body;
+    let { nameQuestion, answers, level, career } = req.body;
     let infoQuestion;
     infoQuestion = await QUESTION_MODEL.insert({
       nameQuestion,
       answers,
       level,
+      career,
     });
     return res.json(infoQuestion);
   } catch (error) {
@@ -27,25 +28,54 @@ route.get("/list-question", async (req, res) => {
   const authorizationHeader = req.headers["authorization"];
   const token = authorizationHeader.substring(7);
   const user = await verify(token);
-
-  if (user.data.role !== "SuperAdmin") {
-    return res.json({ success: false, message: "Không được phép" });
+  if (user.data.role !== "SuperAdmin" && user.data.role !== "Interviewer") {
+    res.json({ success: false, message: "Không được phép" }); //Check quyền của người đang đăng nhập
   }
-
-  const level = req.query.level; 
-
   try {
-    let listQuestion;
-    
-    if (level) {
-      listQuestion = await QUESTION_MODEL.getList(level);
-    } else {
-      listQuestion = await QUESTION_MODEL.getList();
+    const user = await verify(token);
+
+    if (user.data.role !== "SuperAdmin") {
+      return res.json({ success: false, message: "Không được phép" });
     }
 
-    return res.json(listQuestion);
+    const { level, career, page, pageSize } = req.query;
+
+    const totalItems = await QUESTION_MODEL.getCount();
+
+    // Tính toán thông tin phân trang
+    const totalPages = Math.ceil(totalItems / pageSize);
+    const currentPage = parseInt(page);
+    const itemCount =
+      currentPage < totalPages
+        ? parseInt(pageSize)
+        : totalItems - parseInt(pageSize) * (totalPages - 1);
+
+    // Lấy danh sách kết quả với phân trang
+    const infoResultDb = await QUESTION_MODEL.getList({
+      level,
+      career,
+      page,
+      pageSize,
+    });
+
+    if (infoResultDb.error) {
+      return res.json({ success: false, message: infoResultDb.message });
+    }
+
+    // Bao gồm thông tin phân trang trong kết quả trả về
+    return res.json({
+      success: true,
+      data: infoResultDb.data,
+      pagination: {
+        totalItems,
+        itemCount,
+        itemsPerPage: parseInt(pageSize),
+        totalPages,
+        currentPage,
+      },
+    });
   } catch (error) {
-    return res.json(error.message);
+    return res.json({ success: false, message: error.message });
   }
 });
 
@@ -71,13 +101,14 @@ route.patch("/update-question/:questionID", async (req, res) => {
   try {
     let { questionID } = req.params;
 
-    let { nameQuestion, answers, level } = req.body;
+    let { nameQuestion, answers, level, career } = req.body;
 
     let resultUpdate = await QUESTION_MODEL.update({
       questionID,
       nameQuestion,
       answers,
       level,
+      career,
     });
 
     res.json(resultUpdate);

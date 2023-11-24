@@ -33,6 +33,12 @@ const ExamSchema = new Schema({
     default: 0,
   },
 
+  // Vị trí công việc: 0:Backend || 1:FrontEnd || 2:BA || tương tự
+  career: {
+    type: Number,
+    default: 0,
+  },
+
   result: [
     {
       type: Schema.Types.ObjectId,
