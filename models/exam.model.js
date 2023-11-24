@@ -66,7 +66,9 @@ module.exports = class Exam extends EXAM_COLL {
           });
         }
 
-        return resolve({ error: false, data: listExam });
+
+
+        return resolve(listExam);
       } catch (error) {
         return resolve({ error: true, message: error.message });
       }
@@ -174,6 +176,8 @@ module.exports = class Exam extends EXAM_COLL {
   //       }
   //     });
   //   }
+
+
 
   static remove({ examID }) {
     return new Promise(async (resolve) => {
