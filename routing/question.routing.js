@@ -6,7 +6,11 @@ route.post("/add-question", async (req, res) => {
   const authorizationHeader = req.headers["authorization"];
   const token = authorizationHeader.substring(7);
   const user = await verify(token);
-  if (user.data.role !== "SuperAdmin" && user.data.role !== "Interviewer") {
+  if (
+    user.data.role !== "SuperAdmin" &&
+    user.data.role !== "Interviewer" &&
+    user.data.role !== "PM"
+  ) {
     res.json({ success: false, message: "Không được phép" }); //Check quyền của người đang đăng nhập
   }
   try {
@@ -28,7 +32,11 @@ route.get("/list-question", async (req, res) => {
   const authorizationHeader = req.headers["authorization"];
   const token = authorizationHeader.substring(7);
   const user = await verify(token);
-  if (user.data.role !== "SuperAdmin" && user.data.role !== "Interviewer") {
+  if (
+    user.data.role !== "SuperAdmin" &&
+    user.data.role !== "Interviewer" &&
+    user.data.role !== "PM"
+  ) {
     res.json({ success: false, message: "Không được phép" }); //Check quyền của người đang đăng nhập
   }
   try {
@@ -66,6 +74,7 @@ route.get("/list-question", async (req, res) => {
     return res.json({
       success: true,
       data: infoResultDb.data,
+      totalItems: totalItems,
       pagination: {
         totalItems,
         itemCount,
@@ -83,7 +92,7 @@ route.get("/info-question/:questionID", async (req, res) => {
   const authorizationHeader = req.headers["authorization"];
   const token = authorizationHeader.substring(7);
   const user = await verify(token);
-  if (user.data.role !== "SuperAdmin") {
+  if (user.data.role !== "SuperAdmin" && user.data.role !== "PM") {
     res.json({ success: false, message: "Không được phép" }); //Check quyền của người đang đăng nhập
   }
   try {

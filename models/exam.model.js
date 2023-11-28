@@ -65,9 +65,6 @@ module.exports = class Exam extends EXAM_COLL {
               "Không tìm thấy bộ đề với mức độ khó hoặc vị trí công việc này",
           });
         }
-
-
-
         return resolve(listExam);
       } catch (error) {
         return resolve({ error: true, message: error.message });

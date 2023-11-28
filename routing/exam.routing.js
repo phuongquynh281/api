@@ -56,22 +56,21 @@ route.get("/list-exam", async (req, res) => {
         ? parseInt(pageSize)
         : totalItems - parseInt(pageSize) * (totalPages - 1);
 
-    // Lấy danh sách kết quả với phân trang
-    const infoResultDb = await EXAM_MODEL.getList({
+    const examData = await EXAM_MODEL.getList({
       level,
       career,
       page,
       pageSize,
     });
-
-    if (infoResultDb.error) {
-      return res.json({ success: false, message: infoResultDb.message });
+    if (examData.error) {
+      return res.json({ success: false, message: examData.message });
     }
 
     // Bao gồm thông tin phân trang trong kết quả trả về
     return res.json({
       success: true,
-      data: infoResultDb.data,
+      data: examData,
+      totalItems: totalItems,
       pagination: {
         totalItems,
         itemCount,
@@ -93,7 +92,7 @@ route.patch("/:examID", async (req, res) => {
     res.json({ success: false, message: "Không được phép" }); //Check quyền của người đang đăng nhập
   }
   let { examID } = req.params;
-  let { name, description, level, timeDoTest,career } = req.body;
+  let { name, description, level, timeDoTest, career } = req.body;
 
   const resultUpdate = await EXAM_MODEL.update({
     name,
@@ -171,10 +170,7 @@ route.post("/add-questions-to-exam/:examID", async (req, res) => {
     // );
 
     // Gọi hàm để thêm danh sách câu hỏi vào bộ đề
-    const result = await EXAM_MODEL.addQuestionsToExam(
-      examID,
-      questionIDs
-    );
+    const result = await EXAM_MODEL.addQuestionsToExam(examID, questionIDs);
 
     res.json(result);
   } catch (error) {

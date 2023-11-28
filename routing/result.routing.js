@@ -36,6 +36,7 @@ route.get("/list-result", async (req, res) => {
     return res.json({
       success: true,
       data: infoResultDb.data,
+      totalItems: totalItems,
       pagination: {
         totalItems,
         itemCount,

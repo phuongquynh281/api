@@ -30,10 +30,10 @@ app.use(
 const uri = "mongodb://127.0.0.1/tracnghiemOmatech";
 
 mongoose.connect(uri, { useNewUrlParser: true });
-const USER_ROUTER = require("../nhom22_tracnghiemapi/routing/user.routing");
-const EXAM_ROUTER = require("../nhom22_tracnghiemapi/routing/exam.routing");
-const QUESTION_ROUTER = require("../nhom22_tracnghiemapi/routing/question.routing");
-const RESULT_ROUTER = require("../nhom22_tracnghiemapi/routing/result.routing");
+const USER_ROUTER = require("../api/routing/user.routing");
+const EXAM_ROUTER = require("../api/routing/exam.routing");
+const QUESTION_ROUTER = require("../api/routing/question.routing");
+const RESULT_ROUTER = require("../api/routing/result.routing");
 app.use(passport.initialize());
 app.use(passport.session());
 

@@ -10,7 +10,7 @@ const userSchema = new Schema({
 
   role: {
     type: String,
-    enum: ["Interviewee", "Interviewer", "HRM", "SuperAdmin"],
+    enum: ["Interviewee", "Interviewer", "HRM", "PM", "SuperAdmin"],
     default: "Interviewee",
   },
 
@@ -44,7 +44,7 @@ const userSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: "exam",
   },
-  
+
   questions: [
     {
       type: Schema.Types.ObjectId,

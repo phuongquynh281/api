@@ -57,25 +57,47 @@ module.exports = class Result extends RESULT_COLL {
     return new Promise(async (resolve) => {
       try {
         const skip = (page - 1) * pageSize;
-  
+
         let listResult = await RESULT_COLL.find()
           .populate({
             path: "author",
           })
           .populate({
             path: "exam",
+            populate: {
+              path: "questions",
+              select: "name",
+            },
           })
+          .populate({
+            path: "exam",
+            populate: {
+              path: "result",
+              select: "name",
+            },
+          })
+          // .populate({
+          //   populate: {
+          //     path: "falseArr",
+          //     select: "name",
+          //   },
+          // })
+          // .populate({
+          //   populate: {
+          //     path: "trueArr",
+          //     select: "name",
+          //   },
+          // })
           .sort({ createAt: -1 })
           .skip(skip)
           .limit(pageSize);
-  
         if (!listResult || listResult.length === 0) {
           return resolve({
             error: true,
             message: "Không tìm thấy kết quả hoặc danh sách kết quả rỗng",
           });
         }
-  
+
         return resolve({ error: false, data: listResult });
       } catch (error) {
         return resolve({ error: true, message: error.message });
@@ -89,9 +111,7 @@ module.exports = class Result extends RESULT_COLL {
         if (!ObjectID.isValid(resultID))
           return resolve({ error: true, message: "params_invalid" });
 
-        let infoResult = await RESULT_COLL.findById(resultID).populate(
-          "exam"
-        );
+        let infoResult = await RESULT_COLL.findById(resultID).populate("exam");
 
         if (!infoResult)
           return resolve({ error: true, message: "cannot_get_info_data" });
