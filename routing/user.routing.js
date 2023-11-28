@@ -106,7 +106,7 @@ route.get("/list/interviewee", async (req, res) => {
     return res.json({
       success: true,
       data: infoUserDb.data,
-      totalItems: totalItems,
+      totalItems: infoUserDb.pagination.totalItems,
       pagination: infoUserDb.pagination,
     });
   } catch (error) {
@@ -137,7 +137,7 @@ route.get("/list/info/employee", async (req, res) => {
     return res.json({
       success: true,
       data: infoUserDb.data,
-      totalItems: totalItems,
+      totalItems: infoUserDb.pagination.totalItems,
       pagination: infoUserDb.pagination,
     });
   } catch (error) {

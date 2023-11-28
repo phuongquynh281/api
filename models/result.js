@@ -76,18 +76,6 @@ module.exports = class Result extends RESULT_COLL {
               select: "name",
             },
           })
-          // .populate({
-          //   populate: {
-          //     path: "falseArr",
-          //     select: "name",
-          //   },
-          // })
-          // .populate({
-          //   populate: {
-          //     path: "trueArr",
-          //     select: "name",
-          //   },
-          // })
           .sort({ createAt: -1 })
           .skip(skip)
           .limit(pageSize);
@@ -97,7 +85,6 @@ module.exports = class Result extends RESULT_COLL {
             message: "Không tìm thấy kết quả hoặc danh sách kết quả rỗng",
           });
         }
-
         return resolve({ error: false, data: listResult });
       } catch (error) {
         return resolve({ error: true, message: error.message });
@@ -189,6 +176,13 @@ module.exports = class Result extends RESULT_COLL {
       }
     });
   }
+
+  static calculateCorrectIncorrectCounts(result) {
+    const trueCount = result.trueArr.length;
+    const falseCount = result.falseArr.length;
+    return { trueCount, falseCount };
+  }
+
   static searchResultAll({ examID }) {
     return new Promise(async (resolve) => {
       try {
@@ -215,7 +209,13 @@ module.exports = class Result extends RESULT_COLL {
             $unwind: "$exam",
           },
         ]);
-
+        listResult = await Promise.all(
+          listResult.map(async (result) => {
+            const { trueCount, falseCount } =
+              await calculateCorrectIncorrectCounts(result);
+            return { ...result, trueCount, falseCount };
+          })
+        );
         if (!listResult)
           return resolve({ error: true, message: "cannot_get_list_result" });
         return resolve({ error: false, data: listResult, message: "success" });

@@ -236,16 +236,20 @@ route.post("/shuffle-questions/:examID", async (req, res) => {
 
 route.post("/auto/create", async (req, res) => {
   try {
-    const { numberOfQuestions, level } = req.body; // Lấy số câu hỏi và mức độ từ body của yêu cầu
+    const { numberOfQuestions, level, career, name } = req.body; // Lấy số câu hỏi và mức độ từ body của yêu cầu
 
     // Tạo bộ đề mới
     const newExam = new EXAM_MODEL({
       level: level,
-      // Các trường khác của bộ đề
+      career: career,
+      name: name,
     });
 
     // Lấy danh sách câu hỏi từ ngân hàng câu hỏi theo mức độ
-    const questions = await QUESTION_MODEL.find({ level: level });
+    const questions = await QUESTION_MODEL.find({
+      level: level,
+      // career: career,
+    });
 
     if (questions.length < numberOfQuestions) {
       return res
