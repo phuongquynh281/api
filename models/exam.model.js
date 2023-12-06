@@ -5,7 +5,7 @@ const USER_COLL = require("../database/user-coll");
 const { sign, verify } = require("../utils/jwt");
 
 module.exports = class Exam extends EXAM_COLL {
-  static insert({ name, description, level,career, timeDoTest, createAt }) {
+  static insert({ name, description, level, career, timeDoTest, createAt }) {
     return new Promise(async (resolve) => {
       try {
         if (!name || isNaN(Number(level)))
@@ -71,7 +71,7 @@ module.exports = class Exam extends EXAM_COLL {
       }
     });
   }
-  static update({ examID, name, description, timeDoTest, level,career, createAt }) {
+  static update({ examID, name, description, timeDoTest, level, career, createAt }) {
     return new Promise(async (resolve) => {
       try {
         if (!ObjectID.isValid(examID))
@@ -111,70 +111,15 @@ module.exports = class Exam extends EXAM_COLL {
       try {
         if (!ObjectID.isValid(examID, userID))
           return resolve({ error: true, message: "params_invalid" });
-
         let infoExam = await EXAM_COLL.findById(examID);
-        // .populate(
-        //   "subject question user"
-        // );
-
         if (!infoExam)
           return resolve({ error: true, message: "cannot_get_info_data" });
-
-        // let seenOfExam = await EXAM_COLL.findByIdAndUpdate(
-        //   examID,
-        //   {
-        //     $push: { seen: userID },
-        //   },
-        //   { new: true }
-        // );
-
         return resolve({ error: false, data: infoExam });
       } catch (error) {
         return resolve({ error: true, message: error.message });
       }
     });
   }
-
-  //   //Danh sách bộ đề theo môn học
-  //   static getListOfSubjects({ subjectID }) {
-  //     return new Promise(async (resolve) => {
-  //       try {
-  //         let listExamOfSubject = await EXAM_COLL.find({
-  //           subject: subjectID,
-  //         }).populate("subject author");
-
-  //         if (!listExamOfSubject)
-  //           return resolve({ error: true, message: "cannot_get_list_data" });
-
-  //         return resolve({ error: false, data: listExamOfSubject });
-  //       } catch (error) {
-  //         return resolve({ error: true, message: error.message });
-  //       }
-  //     });
-  //   }
-
-  //   //Danh sách bộ đề theo lớp
-  //   static getListExamWithLevel({ subjectID, level }) {
-  //     return new Promise(async (resolve) => {
-  //       try {
-  //         if (isNaN(Number(level)) || !ObjectID.isValid(subjectID))
-  //           return resolve({ error: true, message: "params_invalid" });
-
-  //         let listExamWithLevel = await EXAM_COLL.find({
-  //           subject: subjectID,
-  //           level,
-  //         }).populate("subject author");
-
-  //         if (!listExamWithLevel)
-  //           return resolve({ error: true, message: "cannot_get_list_data" });
-  //         return resolve({ error: false, data: listExamWithLevel });
-  //       } catch (error) {
-  //         return resolve({ error: true, message: error.message });
-  //       }
-  //     });
-  //   }
-
-
 
   static remove({ examID }) {
     return new Promise(async (resolve) => {
@@ -184,11 +129,6 @@ module.exports = class Exam extends EXAM_COLL {
 
         let infoAfterRemove = await EXAM_COLL.findByIdAndDelete(examID);
 
-        let infoQuestionRemove = await QUESTION_COLL.deleteMany({
-          exam: examID,
-        });
-
-        let infoCommentRemove = await COMMENT_COLL.deleteMany({ exam: examID });
 
         if (!infoAfterRemove)
           return resolve({ error: true, message: "cannot_remove_data" });

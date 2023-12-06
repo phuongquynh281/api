@@ -20,7 +20,7 @@ route.post("/create", async (req, res) => {
   const authorizationHeader = req.headers["authorization"];
   const token = authorizationHeader.substring(7);
   const user = await verify(token);
-  if (user.data.role !== "SuperAdmin" && user.data.role !== "Interviewer") {
+  if (user.data.role !== "SuperAdmin" && user.data.role !== "Interviewer" && user.data.role !== "HRM") {
     res.json({ success: false, message: "Không được phép" }); //Check quyền của người đang đăng nhập
   }
   let { username, fullName, gender } = req.body;
@@ -39,7 +39,7 @@ route.post("/employee/create", async (req, res) => {
   const authorizationHeader = req.headers["authorization"];
   const token = authorizationHeader.substring(7);
   const user = await verify(token);
-  if (user.data.role !== "SuperAdmin") {
+  if (user.data.role !== "SuperAdmin" && user.data.role !== "HRM") {
     res.json({ success: false, message: "Không được phép" }); //Check quyền của người đang đăng nhập
   }
   let { username, fullName, gender, role } = req.body;
@@ -58,7 +58,22 @@ route.post("/employee/create", async (req, res) => {
     return res.status(500).json({ error: true, message: error.message }); // Xử lý lỗi nội bộ với mã trạng thái 500 Internal Server Error
   }
 });
+route.delete("/remove-user/:userID", async (req, res) => {
+  const authorizationHeader = req.headers["authorization"];
+  const token = authorizationHeader.substring(7);
+  const user = await verify(token);
+  if (
+    user.data.role !== "SuperAdmin" &&
+    user.data.role !== "Interviewer" &&
+    user.data.role !== "HRM"
+  ) {
+    res.json({ success: false, message: "Không được phép" });
+  }
+  const { userID } = req.params;
 
+  let data = await USER_MODEL.remove({ userID });
+  res.json(data);
+});
 // Xem thông tin của user
 route.get("/:userID", async (req, res) => {
   const authorizationHeader = req.headers["authorization"];
@@ -124,7 +139,7 @@ route.get("/list/info/employee", async (req, res) => {
     const user = await verify(token);
     const { userID } = req.params;
 
-    if (user.data.role !== "SuperAdmin") {
+    if (user.data.role !== "SuperAdmin" && user.data.role !== "HRM") {
       res.json({ success: false, message: "Không được phép" }); //Check quyền của người đang đăng nhập
     }
     const { page, pageSize } = req.query;
@@ -153,7 +168,7 @@ route.patch("/:userID", async (req, res) => {
   const authorizationHeader = req.headers["authorization"];
   const token = authorizationHeader.substring(7);
   const user = await verify(token);
-  if (user.data.role !== "SuperAdmin" && user.data.role !== "Interviewer") {
+  if (user.data.role !== "SuperAdmin" && user.data.role !== "Interviewer" && user.data.role !== "HRM") {
     res.json({ success: false, message: "Không được phép" }); //Check quyền của người đang đăng nhập
   }
   try {
@@ -187,7 +202,7 @@ route.patch("/employee/:userID", async (req, res) => {
   const authorizationHeader = req.headers["authorization"];
   const token = authorizationHeader.substring(7);
   const user = await verify(token);
-  if (user.data.role !== "SuperAdmin") {
+  if (user.data.role !== "SuperAdmin" && user.data.role !== "HRM") {
     res.json({ success: false, message: "Không được phép" });
   }
   try {

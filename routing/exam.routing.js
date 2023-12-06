@@ -128,7 +128,9 @@ route.delete("/remove-exam/:examID", async (req, res) => {
   const user = await verify(token);
   if (user.data.role !== "SuperAdmin" && user.data.role !== "Interviewer") {
     res.json({ success: false, message: "Không được phép" }); //Check quyền của người đang đăng nhập
+
   }
+  const { examID } = req.params
   let resultRemove = await EXAM_MODEL.remove({ examID });
   res.json(resultRemove);
 });
@@ -142,34 +144,7 @@ route.post("/add-questions-to-exam/:examID", async (req, res) => {
   }
   try {
     const { examID } = req.params; // Lấy examID từ URL
-
-    // Lấy thông tin về bộ đề theo examID
-    // const exam = await EXAM_MODEL.getExamById(examID);
-
-    // if (!exam || !exam.data) {
-    //   return res.json({ success: false, message: "Bộ đề không tồn tại" });
-    // }
-
-    // const { level } = exam.data;
-
-    // // Lấy danh sách câu hỏi theo mức độ khó
-    // const questions = await QUESTION_MODEL.getList(level);
-
-    // if (!questions || !questions.data) {
-    //   return res.json({
-    //     success: false,
-    //     message: "Không tìm thấy câu hỏi với mức độ khó này",
-    //   });
-    // }
-
     const { questionIDs } = req.body; // Lấy danh sách questionIDs từ body
-
-    // Lọc danh sách câu hỏi dựa trên questionIDs và levelDifficulty của bộ đề
-    // const filteredQuestionIDs = questionIDs.filter((id) =>
-    //   questions.data.some((question) => question._id.toString() === id)
-    // );
-
-    // Gọi hàm để thêm danh sách câu hỏi vào bộ đề
     const result = await EXAM_MODEL.addQuestionsToExam(examID, questionIDs);
 
     res.json(result);
@@ -207,7 +182,7 @@ route.post("/shuffle-questions/:examID", async (req, res) => {
     const { examID } = req.params; // Lấy examID từ URL
 
     // Lấy danh sách câu hỏi từ bộ đề (hoặc tùy theo cách bạn lưu trữ dữ liệu)
-    const exam = await EXAM_MODEL.findById(examID).populate("questions"); // Thay thế ExamModel và populate bằng cách sử dụng mã của bạn
+    const exam = await EXAM_MODEL.findById(examID).populate("questions"); // Thay thế ExamModel và populate bằng cách sử dụng mã 
 
     if (!exam) {
       return res
@@ -278,11 +253,6 @@ route.post("/auto/create", async (req, res) => {
 route.post("/assign-exam/:examID/:candidateID", async (req, res) => {
   try {
     const { examID, candidateID } = req.params;
-
-    // Kiểm tra tính hợp lệ của examID và candidateID(ứng viên)
-    // if (!ObjectID.isValid(examID) || !ObjectID.isValid(candidateID)) {
-    //   return res.status(400).json({ success: false, message: 'bộ đề hoặc ứng viên không hợp lệ' });
-    // }
 
     // Tìm bộ đề trong cơ sở dữ liệu
     const exam = await EXAM_MODEL.findById(examID);

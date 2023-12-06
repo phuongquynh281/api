@@ -6,7 +6,15 @@ const mongoose = require("mongoose");
 const session = require("express-session");
 const passport = require("passport");
 const { hash, compare } = require("bcryptjs");
+const swaggerUi = require('swagger-ui-express');
 
+var options = {
+  swaggerOptions: {
+    url: 'http://localhost:8000/exam'
+  }
+}
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(null, options));
 app.use(cors());
 app.use(bodyParse.urlencoded({ extended: true }));
 app.use(bodyParse.json());
@@ -27,13 +35,13 @@ app.use(
   })
 );
 //Kết nối cơ sở dư liêu vào
-const uri = "mongodb://127.0.0.1/tracnghiemOmatech";
+const uri = "mongodb://127.0.0.1/tracnghiem";
 
 mongoose.connect(uri, { useNewUrlParser: true });
-const USER_ROUTER = require("../api/routing/user.routing");
-const EXAM_ROUTER = require("../api/routing/exam.routing");
-const QUESTION_ROUTER = require("../api/routing/question.routing");
-const RESULT_ROUTER = require("../api/routing/result.routing");
+const USER_ROUTER = require("../nhom22_tracnghiemapi/routing/user.routing");
+const EXAM_ROUTER = require("../nhom22_tracnghiemapi/routing/exam.routing");
+const QUESTION_ROUTER = require("../nhom22_tracnghiemapi/routing/question.routing");
+const RESULT_ROUTER = require("../nhom22_tracnghiemapi/routing/result.routing");
 app.use(passport.initialize());
 app.use(passport.session());
 

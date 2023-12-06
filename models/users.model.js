@@ -4,6 +4,27 @@ const { hash, compare } = require("bcryptjs");
 const { sign, verify } = require("../utils/jwt");
 
 module.exports = class User {
+  static remove({ userID }) {
+    return new Promise(async (resolve) => {
+      try {
+        if (!ObjectID.isValid(userID))
+          return resolve({ error: true, message: "params_invalid" });
+
+        let infoAfterRemove = await USER.findByIdAndDelete(userID);
+
+        if (!infoAfterRemove)
+          return resolve({ error: true, message: "cannot_remove_data" });
+
+        return resolve({
+          error: false,
+          data: infoAfterRemove,
+          message: "remove_data_success",
+        });
+      } catch (error) {
+        return resolve({ error: true, message: error.message });
+      }
+    });
+  }
   static createUser(username, fullName, gender) {
     return new Promise(async (resolve) => {
       try {
@@ -204,21 +225,21 @@ module.exports = class User {
     return new Promise(async (resolve) => {
       try {
         const skip = (page - 1) * pageSize;
-  
+
         let listUser = await USER.find({
           role: { $in: ["Interviewer", "HRM"] }
         }).skip(skip).limit(pageSize);
-  
+
         const totalItems = await USER.countDocuments({ role: { $in: ["Interviewer", "HRM"] } });
         const totalPages = Math.ceil(totalItems / pageSize);
-  
+
         if (!listUser || listUser.length === 0) {
           return resolve({
             error: true,
             message: "Không tìm thấy danh sách nhân viên",
           });
         }
-  
+
         return resolve({
           error: false,
           data: listUser,
